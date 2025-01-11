@@ -1,6 +1,8 @@
 /// g++ main.cpp MDsim.cpp utils.cpp -o MDsim -O3
-/// ./MDsim
+/// g++ main.cpp MDsim.cpp utils.cpp -I../include -o MDsim -O3
+/// ./MDsim xyz.in run.in thermo.out traj.out
 
+#include <argparse.hpp>
 #include <cstdlib>   // srand, rand
 #include <ctime>     // clock
 #include <fstream>   // file
@@ -56,18 +58,33 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
   cout << "Time used = " << tElapsed << " s" << endl;
 }
 
-int main(int argc, char *argv[]) {
-  /// ./MDsim xyz.in run.in output.out
-  if (argc != 4) {
-    cout << "Usage: " << argv[0] << " xyz.in run.in" << endl;
+int main(int argc, char* argv[]) {
+  argparse::ArgumentParser program("MDsim");
+
+  program.add_argument("xyz_file").help("Path to the XYZ input file");
+  program.add_argument("run_file").help("Path to the run input file");
+  program.add_argument("thermo_output_file")
+      .help("Path to the thermo output file");
+  program.add_argument("traj_output_file")
+      .help("Path to the trajectory output file");
+
+  try {
+    program.parse_args(argc, argv);
+  } catch (const exception& err) {
+    cerr << err.what() << endl;
+    cerr << program;
     return 1;
   }
-  string xyz_file = argv[1];
-  string run_file = argv[2];
-  string thermo_output_file = argv[3];
+
+  string xyz_file = program.get<string>("xyz_file");
+  string run_file = program.get<string>("run_file");
+  string thermo_output_file = program.get<string>("thermo_output_file");
+  string traj_output_file = program.get<string>("traj_output_file");
+
   cout << "Running simulation with " << xyz_file << " and " << run_file << endl;
   cout << "Output will be written to " << thermo_output_file << endl;
+  cout << "Trajectory will be written to " << traj_output_file << endl;
 
-  run_sim(xyz_file, run_file, thermo_output_file);
+  run_sim(xyz_file, run_file, thermo_output_file, traj_output_file);
   return 0;
 }
