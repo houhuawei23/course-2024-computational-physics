@@ -1,6 +1,7 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Iinclude -std=c++17 -O3 -Wall
+CXXFLAGS = -fopenmp -Iinclude -std=c++17 -O3 -Wall # -pg for profiling
+DEBUGFLAGS = -g
 
 # Directories
 SRC_DIR = src
@@ -24,7 +25,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+debug: CXXFLAGS += $(DEBUGFLAGS)
+debug: $(TARGET)
+
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-.PHONY: all clean
+.PHONY: all clean debug

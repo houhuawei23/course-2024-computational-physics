@@ -61,6 +61,7 @@ class MDSim {
 
   void integrate(const bool isStepOne, const double timeStep);
   void findForce();
+  void findForceParallel();  // use openmp to parallel
   double findKineticEnergy() const;
 
   void dump_thermo(ostream& os, const int step) const;

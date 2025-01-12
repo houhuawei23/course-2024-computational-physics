@@ -3,6 +3,7 @@
 /// ./MDsim xyz.in run.in thermo.out traj.out
 
 #include <argparse.hpp>
+#include <chrono>    // for timing
 #include <cstdlib>   // srand, rand
 #include <ctime>     // clock
 #include <fstream>   // file
@@ -12,6 +13,7 @@
 #include "MDSim.hpp"
 
 using namespace std;
+using Clock = std::chrono::high_resolution_clock;
 
 void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
              string thermo_output_file = "thermo.out",
@@ -21,25 +23,25 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
 
   MDSim sim_system;
   sim_system.read_run(run_file);
-  sim_system.print_run_info();
+  // sim_system.print_run_info();
   sim_system.read_xyz(xyz_file);
-  sim_system.print_state();
+  // sim_system.print_state();
 
   sim_system.initializeVelocity(sim_system.temperature);
 
   if (dump_xyz_lammps) {
     ofstream xyz_lammps_ofile("xyz_lammps.data");
     sim_system.dump_xyz_lammps(xyz_lammps_ofile, 0);
+    xyz_lammps_ofile.close();
     // return;
   }
-  const clock_t tStart = clock();
   ofstream thermo_ofile(thermo_output_file);
   thermo_ofile << fixed << setprecision(16);
 
   ofstream traj_ofile(traj_output_file);
   traj_ofile << fixed << setprecision(16);
 
-
+  const auto tStart = Clock::now();
   // thermo_ofile << "Step Temp(K) Pressure(bar) KE(eV) PE(eV)" << endl;
   for (int step = 0; step < sim_system.numSteps; ++step) {
     if (sim_system.neighbor_flag != 0) {
@@ -48,6 +50,7 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
 
     sim_system.integrate(true, sim_system.timeStep);
     sim_system.findForce();
+    // sim_system.findForceParallel();
     sim_system.integrate(false, sim_system.timeStep);
     if (step % Ns == 0) {
       sim_system.dump_thermo(cout, step);
@@ -55,10 +58,14 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
       sim_system.dump_trj_one_step(traj_ofile, step);
     }
   }
-
+  const auto tStop = Clock::now();
   thermo_ofile.close();
-  const clock_t tStop = clock();
-  const float tElapsed = float(tStop - tStart) / CLOCKS_PER_SEC;
+  traj_ofile.close();
+
+  const auto tElapsed =
+      std::chrono::duration_cast<std::chrono::duration<float>>(tStop - tStart)
+          .count();
+
   cout << sim_system.numUpdates << " neighbor list updates" << endl;
   cout << "Time used = " << tElapsed << " s" << endl;
   cout << "sim Done" << endl;
@@ -91,6 +98,6 @@ int main(int argc, char* argv[]) {
   cout << "Output will be written to " << thermo_output_file << endl;
   cout << "Trajectory will be written to " << traj_output_file << endl;
 
-  run_sim(xyz_file, run_file, thermo_output_file, traj_output_file, true);
+  run_sim(xyz_file, run_file, thermo_output_file, traj_output_file, false);
   return 0;
 }

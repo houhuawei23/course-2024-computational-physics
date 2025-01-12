@@ -1,6 +1,8 @@
 
 #include "MDSim.hpp"
 
+#include <omp.h>
+
 #include <cmath>     // sqrt() function
 #include <ctime>     // for timing
 #include <fstream>   // file
@@ -311,6 +313,7 @@ find the neighbor list using the ON2 method.
   print an error message and exit the program
 */
 void MDSim::findNeighborON2() {
+  // cout << "findNeighborON2" << endl;
   const double neighborCutoffSquare = neighborCutoff * neighborCutoff;
   // set neighbor number to 0
   std::fill(numNeighbor.begin(), numNeighbor.end(), 0);
@@ -345,7 +348,8 @@ find the neighbor list using the ON1 method.
 
 1. split the box into small cubic cells
 2. for each atom, find the cell it belongs to
-3. for each atom, traverse its neighboring cells and add the atoms in the neighboring cells to its neighbor list
+3. for each atom, traverse its neighboring cells and add the atoms in the
+neighboring cells to its neighbor list
 4. if the neighbor list of an atom exceeds the maximum number of neighbors,
   print an error message and exit the program
 */
@@ -476,21 +480,134 @@ vi[t + 1/2*dt] -> vi[t + dt] = vi[t + 1/2*dt] + 1/2 * dt * fi[t + dt] / m
 */
 void MDSim::integrate(const bool isStepOne, const double timeStep) {
   const double timeStepHalf = timeStep * 0.5;
-  for (int n = 0; n < numAtoms; ++n) {
-    const double mass_inv = 1.0 / mass[n];
-    const double ax = fx[n] * mass_inv;
-    const double ay = fy[n] * mass_inv;
-    const double az = fz[n] * mass_inv;
-    vx[n] += ax * timeStepHalf;
-    vy[n] += ay * timeStepHalf;
-    vz[n] += az * timeStepHalf;
+  // try to use OpenMP to parallelize the loop
+  // size_t thread_count = omp_get_max_threads();
+  //   size_t thread_count = 4;
+  // #pragma omp parallel for num_threads(thread_count)
+  for (int atom_id = 0; atom_id < numAtoms; ++atom_id) {
+    const double mass_inv = 1.0 / mass[atom_id];
+    const double ax = fx[atom_id] * mass_inv;
+    const double ay = fy[atom_id] * mass_inv;
+    const double az = fz[atom_id] * mass_inv;
+    vx[atom_id] += ax * timeStepHalf;
+    vy[atom_id] += ay * timeStepHalf;
+    vz[atom_id] += az * timeStepHalf;
     if (isStepOne) {
-      x[n] += vx[n] * timeStep;
-      y[n] += vy[n] * timeStep;
-      z[n] += vz[n] * timeStep;
+      x[atom_id] += vx[atom_id] * timeStep;
+      y[atom_id] += vy[atom_id] * timeStep;
+      z[atom_id] += vz[atom_id] * timeStep;
     }
   }
 }
+
+void MDSim::findForceParallel() {
+  // LJ potential parameters
+  const double epsilon = 1.032e-2;
+  const double sigma = 3.405;
+  const double cutoff = 9.0;  // potential cutoff, rc
+
+  const double neighborCutoffSquare = cutoff * cutoff;
+  const double sigma3 = sigma * sigma * sigma;
+  const double sigma6 = sigma3 * sigma3;
+  const double sigma12 = sigma6 * sigma6;
+  const double e24s6 = 24.0 * epsilon * sigma6;
+  const double e48s12 = 48.0 * epsilon * sigma12;
+  const double e4s6 = 4.0 * epsilon * sigma6;
+  const double e4s12 = 4.0 * epsilon * sigma12;
+
+  // Reset forces and potential energy
+  potentialEnergy = 0.0;
+  // #pragma omp parallel for
+  for (int n = 0; n < numAtoms; ++n) {
+    fx[n] = fy[n] = fz[n] = 0.0;
+  }
+
+  double potentialEnergyLocal = 0.0;  // Thread-local potential energy
+
+  size_t thread_count = 4;
+#pragma omp parallel for num_threads(thread_count) \
+    reduction(+ : potentialEnergyLocal) schedule(dynamic)
+  for (int i = 0; i < numAtoms; ++i) {
+    const double xi = x[i];
+    const double yi = y[i];
+    const double zi = z[i];
+
+    if (neighbor_flag == 0) {
+      for (int j = i + 1; j < numAtoms; ++j) {
+        double xij = x[j] - xi;
+        double yij = y[j] - yi;
+        double zij = z[j] - zi;
+        applyMic(box, xij, yij, zij);
+        const double r2 = xij * xij + yij * yij + zij * zij;
+        if (r2 > neighborCutoffSquare) continue;
+
+        const double r2inv = 1.0 / r2;
+        const double r4inv = r2inv * r2inv;
+        const double r6inv = r2inv * r4inv;
+        const double r8inv = r4inv * r4inv;
+        const double r12inv = r4inv * r8inv;
+        const double r14inv = r6inv * r8inv;
+        const double f_ij = e24s6 * r8inv - e48s12 * r14inv;
+
+#pragma omp atomic
+        fx[i] += f_ij * xij;
+#pragma omp atomic
+        fx[j] -= f_ij * xij;
+
+#pragma omp atomic
+        fy[i] += f_ij * yij;
+#pragma omp atomic
+        fy[j] -= f_ij * yij;
+
+#pragma omp atomic
+        fz[i] += f_ij * zij;
+#pragma omp atomic
+        fz[j] -= f_ij * zij;
+
+        potentialEnergyLocal += e4s12 * r12inv - e4s6 * r6inv;
+      }
+    } else {
+      for (int jj = 0; jj < numNeighbor[i]; ++jj) {
+        const int j = neighborLists[i][jj];
+        double xij = x[j] - xi;
+        double yij = y[j] - yi;
+        double zij = z[j] - zi;
+        applyMic(box, xij, yij, zij);
+        const double r2 = xij * xij + yij * yij + zij * zij;
+        if (r2 > neighborCutoffSquare) continue;
+
+        const double r2inv = 1.0 / r2;
+        const double r4inv = r2inv * r2inv;
+        const double r6inv = r2inv * r4inv;
+        const double r8inv = r4inv * r4inv;
+        const double r12inv = r4inv * r8inv;
+        const double r14inv = r6inv * r8inv;
+        const double f_ij = e24s6 * r8inv - e48s12 * r14inv;
+
+#pragma omp atomic
+        fx[i] += f_ij * xij;
+#pragma omp atomic
+        fx[j] -= f_ij * xij;
+
+#pragma omp atomic
+        fy[i] += f_ij * yij;
+#pragma omp atomic
+        fy[j] -= f_ij * yij;
+
+#pragma omp atomic
+        fz[i] += f_ij * zij;
+#pragma omp atomic
+        fz[j] -= f_ij * zij;
+
+        potentialEnergyLocal += e4s12 * r12inv - e4s6 * r6inv;
+      }
+    }
+  }
+
+  // Combine thread-local potential energy into global potential energy
+  potentialEnergy += potentialEnergyLocal;
+}
+
 /*
 use LJ potential to calculate the force on each atom.
 1. calculate the distance between each pair of atoms
