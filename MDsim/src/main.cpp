@@ -2,13 +2,13 @@
 /// g++ main.cpp MDsim.cpp utils.cpp -I../include -o MDsim -O3
 /// ./MDsim xyz.in run.in thermo.out traj.out
 
-#include <argparse.hpp>
 #include <cstdlib>   // srand, rand
 #include <ctime>     // clock
 #include <fstream>   // file
 #include <iomanip>   // setprecision
 #include <iostream>  // cout
 
+#include <argparse.hpp>
 #include "MDSim.hpp"
 
 using namespace std;
