@@ -126,5 +126,19 @@ def check_energy_fluctuation_beta():
 if __name__ == "__main__":
     # thermo_out_file = './test/thermo.out'
     # plot_file = './test/energy.png'
-    # plot_results_beta(thermo_out_file, plot_file)
-    check_energy_fluctuation_beta()
+    # arg parse
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Plot results of MD simulation")
+    parser.add_argument("thermo_out_file", type=str, help="path to thermo.out file")
+    parser.add_argument(
+        "--plot_file", type=str, default="energy.png", help="path to output plot file"
+    )
+    args = parser.parse_args()
+    thermo_out_file = args.thermo_out_file
+    plot_file = args.plot_file
+    # run example: python plot_results.py ./test/thermo.out --plot_file ./test/energy.png
+    # python ./scripts/plot_results.py ./test/lammps/thermo.out --plot_file ./lammps_energy.png
+    plot_results_beta(thermo_out_file, plot_file)
+
+    # check_energy_fluctuation_beta()

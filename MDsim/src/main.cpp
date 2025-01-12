@@ -2,20 +2,21 @@
 /// g++ main.cpp MDsim.cpp utils.cpp -I../include -o MDsim -O3
 /// ./MDsim xyz.in run.in thermo.out traj.out
 
+#include <argparse.hpp>
 #include <cstdlib>   // srand, rand
 #include <ctime>     // clock
 #include <fstream>   // file
 #include <iomanip>   // setprecision
 #include <iostream>  // cout
 
-#include <argparse.hpp>
 #include "MDSim.hpp"
 
 using namespace std;
 
 void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
              string thermo_output_file = "thermo.out",
-             string traj_output_file = "traj.out") {
+             string traj_output_file = "traj.out",
+             bool dump_xyz_lammps = false) {
   const int Ns = 100;  // output frequency
 
   MDSim sim_system;
@@ -23,8 +24,13 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
   sim_system.print_run_info();
   sim_system.read_xyz(xyz_file);
   sim_system.print_state();
+
   sim_system.initializeVelocity(sim_system.temperature);
 
+  if (dump_xyz_lammps) {
+    ofstream xyz_lammps_ofile("xyz_lammps.data");
+    sim_system.dump_xyz_lammps(xyz_lammps_ofile, 0);
+  }
   const clock_t tStart = clock();
   ofstream thermo_ofile(thermo_output_file);
   thermo_ofile << fixed << setprecision(16);
@@ -32,6 +38,8 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
   ofstream traj_ofile(traj_output_file);
   traj_ofile << fixed << setprecision(16);
 
+
+  // thermo_ofile << "Step Temp(K) Pressure(bar) KE(eV) PE(eV)" << endl;
   for (size_t step = 0; step < sim_system.numSteps; ++step) {
     if (sim_system.neighbor_flag != 0) {
       sim_system.findNeighbor();
@@ -41,13 +49,9 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
     sim_system.findForce();
     sim_system.integrate(false, sim_system.timeStep);
     if (step % Ns == 0) {
-      double kineticEnergy = sim_system.findKineticEnergy();
-      const double T = kineticEnergy / (1.5 * K_B * sim_system.numAtoms);
-      cout << "Step " << step << " T = " << T << " KE = " << kineticEnergy
-           << " PE = " << sim_system.pe << endl;
-      thermo_ofile << T << " " << kineticEnergy << " " << sim_system.pe << endl;
-
-      sim_system.dump_one_step(traj_ofile, step);
+      sim_system.dump_thermo(cout, step);
+      sim_system.dump_thermo(thermo_ofile, step);
+      sim_system.dump_trj_one_step(traj_ofile, step);
     }
   }
 

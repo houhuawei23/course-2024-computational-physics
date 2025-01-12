@@ -18,6 +18,17 @@ std::vector<std::string> getTokens(std::ifstream& input) {
   return tokens;
 }
 
+size_t getSizeT(std::string& token) {
+  size_t value = 0;
+  try {
+    value = std::stoll(token);
+  } catch (const std::exception& e) {
+    std::cout << "Standard exception:" << e.what() << std::endl;
+    exit(1);
+  }
+  return value;
+}
+
 int getInt(std::string& token) {
   int value = 0;
   try {

@@ -1,0 +1,35 @@
+# Ar: epsilon = 122 (K*kB), sigma = 3.40 (A)
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+read_data xyz_lammps.data      
+
+mass 1 40.0
+pair_style lj/cut 12.0
+pair_coeff 1 1 0.01034 3.4
+
+timestep 1e-3
+thermo 100
+# minimize 1.0e-4 1.0e-6 100 1000
+
+variable T equal 60
+velocity all create $T 87287
+
+fix NVE all nve
+
+# Output energy-related quantities to a separate file
+variable my_temp equal temp     # Temperature
+variable my_press equal press   # Pressure
+variable my_ke equal ke         # Kinetic energy
+variable my_pe equal pe         # Potential energy
+
+# fix energy_output all print 100 "${my_temp} ${my_press} ${my_ke} ${my_pe}" file thermo.out screen no title "Temp(K) Pressure(bar) KE(eV) PE(eV)"
+fix energy_output all print 100 "${my_temp} ${my_ke} ${my_pe}" file thermo.out
+
+
+dump 1 all custom 100 lammps_traj.out id type x y z vx vy vz
+
+run 10000
