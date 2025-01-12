@@ -30,6 +30,7 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
   if (dump_xyz_lammps) {
     ofstream xyz_lammps_ofile("xyz_lammps.data");
     sim_system.dump_xyz_lammps(xyz_lammps_ofile, 0);
+    // return;
   }
   const clock_t tStart = clock();
   ofstream thermo_ofile(thermo_output_file);
@@ -40,7 +41,7 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
 
 
   // thermo_ofile << "Step Temp(K) Pressure(bar) KE(eV) PE(eV)" << endl;
-  for (size_t step = 0; step < sim_system.numSteps; ++step) {
+  for (int step = 0; step < sim_system.numSteps; ++step) {
     if (sim_system.neighbor_flag != 0) {
       sim_system.findNeighbor();
     }
@@ -60,6 +61,7 @@ void run_sim(string xyz_file = "xyz.in", string run_file = "run.in",
   const float tElapsed = float(tStop - tStart) / CLOCKS_PER_SEC;
   cout << sim_system.numUpdates << " neighbor list updates" << endl;
   cout << "Time used = " << tElapsed << " s" << endl;
+  cout << "sim Done" << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -89,6 +91,6 @@ int main(int argc, char* argv[]) {
   cout << "Output will be written to " << thermo_output_file << endl;
   cout << "Trajectory will be written to " << traj_output_file << endl;
 
-  run_sim(xyz_file, run_file, thermo_output_file, traj_output_file);
+  run_sim(xyz_file, run_file, thermo_output_file, traj_output_file, true);
   return 0;
 }

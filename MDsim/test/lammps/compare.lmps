@@ -8,10 +8,10 @@ atom_style atomic
 read_data xyz_lammps.data      
 
 mass 1 40.0
-pair_style lj/cut 12.0
+pair_style lj/cut 9.0 # 9.0
 pair_coeff 1 1 0.01034 3.4
 
-timestep 1e-3
+timestep 5e-3 # 5fs: 5e-3 ps
 thermo 100
 # minimize 1.0e-4 1.0e-6 100 1000
 

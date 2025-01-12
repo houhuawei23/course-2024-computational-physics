@@ -18,8 +18,8 @@ std::vector<std::string> getTokens(std::ifstream& input) {
   return tokens;
 }
 
-size_t getSizeT(std::string& token) {
-  size_t value = 0;
+int getSizeT(std::string& token) {
+  int value = 0;
   try {
     value = std::stoll(token);
   } catch (const std::exception& e) {
@@ -56,8 +56,15 @@ double getDet(const double box[]) {
          box[1] * (box[5] * box[6] - box[3] * box[8]) +
          box[2] * (box[3] * box[7] - box[4] * box[6]);
 }
-
-void getInverseBox(double box[]) {
+/* 
+box[0:9]:
+  ax, bx, cx; 
+  ay, by, cy; 
+  az, bz, cz; 
+box[9:18]:
+  inverse(boc[0:9])
+*/
+void getInverseBox(double box[] ) {
   box[9] = box[4] * box[8] - box[5] * box[7];
   box[10] = box[2] * box[7] - box[1] * box[8];
   box[11] = box[1] * box[5] - box[2] * box[4];
@@ -92,17 +99,24 @@ void getThickness(double* thickness, double box[18]) {
 /*
 确定粒子所在的格子编号
 */
-void findCell(const double box[], const double thickness[], const double r[],
-              double cutoffInverse, const int numCells[], int cell[]) {
+void findCell(const double box[] /* ax, bx, cx; ay, by, cy; az, bz, cz; ... */,
+              const double thickness[] /* h1, h2, h3; */,
+              const double r[] /* x, y, z; of the atom */,
+              double cutoffInverse /* 1.0 / neighborCutoff*/,
+              const int numCells[] /* Na, Nb, Nc, N; */,
+              int cell[] /* i, j, k, index; */) {
   double s[3];
-  s[0] = box[9] * r[0] + box[10] * r[1] + box[11] * r[2];
+  // s = box.inverse() * r
+  s[0] = box[9] * r[0] + box[10] * r[1] + box[11] * r[2]; 
   s[1] = box[12] * r[0] + box[13] * r[1] + box[14] * r[2];
   s[2] = box[15] * r[0] + box[16] * r[1] + box[17] * r[2];
+  // 确定粒子所在的格子编号 (i, j, k)
   for (int d = 0; d < 3; ++d) {
     cell[d] = floor(s[d] * thickness[d] * cutoffInverse);
     if (cell[d] < 0) cell[d] += numCells[d];
     if (cell[d] >= numCells[d]) cell[d] -= numCells[d];
   }
+  // 确定粒子的序号
   cell[3] = cell[0] + numCells[0] * (cell[1] + numCells[1] * cell[2]);
 }
 

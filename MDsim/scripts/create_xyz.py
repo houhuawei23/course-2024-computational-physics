@@ -1,9 +1,14 @@
 import numpy as np
-
+# 0 0 0 
+# 0 0.5 0.5
+# 0.5 0 0.5
+# 0.5 0.5 0
 r0 = np.array([[0.0, 0.0, 0.5, 0.5], [0.0, 0.5, 0.0, 0.5], [0.0, 0.5, 0.5, 0.0]]).T
 
 n0 = r0.shape[0]
+
 nxyz = 6 * np.array([1, 1, 1])
+
 N = nxyz[0] * nxyz[1] * nxyz[2] * n0
 a = 5.385 * np.array([1, 1, 1])
 box_length = a * nxyz
