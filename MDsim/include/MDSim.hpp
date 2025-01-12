@@ -16,13 +16,15 @@ class MDSim {
   double temperature;  // K
   double timeStep;     // natural
   /// sim members
-  int numAtoms;  // number of atoms
+  size_t numAtoms;  // number of atoms
   int numUpdates = 0;
   int neighbor_flag = 2;
   const int MN = 1000;  // maximum number of neighbors
   double cutoffNeighbor = 10.0;
+  // ax, bx, cx; ay, by, cy; az, bz, cz;
+  // remaining 9 elements are the inverse box matrix
   double box[18];
-  double pe;
+  double pe; // potential energy
   std::vector<int> NN, NL;
   std::vector<double> mass, x0, y0, z0, x, y, z, vx, vy, vz, fx, fy, fz;
 
@@ -56,13 +58,16 @@ class MDSim {
   void findForce();
   double findKineticEnergy() const;
 
-  void dump_one_step(std::ostream& os, const size_t step) const;
+  void dump_thermo(std::ostream& os, const size_t step) const;
+  void dump_trj_one_step(std::ostream& os, const size_t step) const;
+  void dump_xyz_lammps(std::ostream& os, const size_t step = 0) const;
 };
 
 // helper functions
 // parse a line of input file and return a vector of tokens
 std::vector<std::string> getTokens(std::ifstream& input);
 int getInt(std::string& token);
+size_t getSizeT(std::string& token);
 double getDouble(std::string& token);
 
 // 计算矩阵 H 的行列式
