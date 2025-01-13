@@ -79,33 +79,33 @@ main 主控函数
 
 Scripts for Lammps simulation.
 
-- `LammpsModeling/` Lammps 建模练习
-- `BrownMotion/` 布朗运动
+- [`LammpsModeling/`](LammpsScripts/LammpsModeling/) Lammps 建模练习
+- [`BrownMotion/`](LammpsScripts/BrownMotion/) 布朗运动
   - Class09, 布朗运动 计算扩散系数
   - 热浴 - 用于控温
   - Berendsen 热浴、Bussi-Donadio-Parrinello 热浴、
   - Nose-Hoover 热浴、Nose-Hoover 链热浴以及朗之万热浴
-- `Diffusion/` 扩散运动
+- [`Diffusion/`](LammpsScripts/Diffusion/) 扩散运动
   - Class09, 布朗运动 计算扩散系数
   - Ar 的扩散系数
-- `VacuumDiffusion/` 真空扩散
-- `Flow/` 流动 Class10
+- [`VacuumDiffusion/`](LammpsScripts/VacuumDiffusion) 真空扩散
+- [`Flow/`](LammpsScripts/Flow) 流动 Class10
   - 流速随距离 x 的变化
-- `Vicosity/` 粘度 Class10
-- `BalanceLatticeConstant/` 平衡晶格常数
+- [`Vicosity/`](LammpsScripts/Vicosity) 粘度 Class10
+- [`BalanceLatticeConstant/`](LammpsScripts/BalanceLatticeConstant) 平衡晶格常数
   - Class11, 力学性质计算
   - 循环控制 二次曲线拟合
-- `LJ-BodyModulus/` LJ 体模量
+- [`LJ-BodyModulus/`](LammpsScripts/LJ-BodyModulus) LJ 体模量
   - Class11, 力学性质计算
   - BM (Birch-Murnaghan) 方程拟合
-- `ThermalExpansion/` 热膨胀
+- [`ThermalExpansion/`](LammpsScripts/ThermalExpansion) 热膨胀
   - Class12, 热力学性质计算
-- `MeltingPoint/` 熔点
+- [`MeltingPoint/`](LammpsScripts/MeltingPoint) 熔点
   - Class12
-- `HeatConduction/` 热传导
+- [`HeatConduction/`](LammpsScripts/HeatConduction) 热传导
   - Class13, 热输运性质计算
   - 傅里叶定律; 非平衡法计算热导率; Green-Kubo 理论
 
 others
 
-- `potentials/` 相互作用势
+- [`potentials/`](LammpsScripts/) 相互作用势

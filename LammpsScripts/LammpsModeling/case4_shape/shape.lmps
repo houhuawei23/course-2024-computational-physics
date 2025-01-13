@@ -1,0 +1,38 @@
+# run: lmp -in shape.lmps -var TYPE bcc -var LATTICE_CONSTANT 1 -var SHAPE cylinder
+
+units metal
+dimension 3
+boundary p p p
+
+# Define the region and box first
+region box block 0 20 0 20 0 20
+create_box 1 box
+
+# Now define the lattice type and constant
+variable lattice_type string ${TYPE}
+variable lattice_constant equal ${LATTICE_CONSTANT}
+
+lattice ${lattice_type} ${lattice_constant}
+
+# Define shape based on the command line variable
+variable shape string ${SHAPE}
+
+# Create region based on the specified shape
+## cylinder args = dim c1 c2 radius lo hi
+if "${shape} == cylinder" then "region shape cylinder z 10 10 5 0 20"
+## sphere args = x y z radius
+if "${shape} == sphere" then "region shape sphere 10 10 10 10"
+## cone args = dim c1 c2 radlo radhi lo hi
+if "${shape} == cone" then "region shape cone z 10 10 5 10 0 20"
+
+
+
+# Create atoms only in the defined shape
+create_atoms 1 region shape
+
+# Define potential
+pair_style eam/alloy
+pair_coeff * * ../../Al99.eam.alloy Al  # Ensure Al99.eam.alloy is present
+
+# Output atomic positions
+write_data ${lattice_type}_${lattice_constant}_${shape}.data

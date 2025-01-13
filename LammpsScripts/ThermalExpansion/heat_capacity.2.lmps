@@ -1,0 +1,37 @@
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+
+lattice fcc 3.62  
+region simbox block 0 8 0 8 0 8
+create_box 1 simbox
+create_atoms 1 box
+
+pair_style eam 
+pair_coeff * * ../potentials/Cu_u3.eam
+
+variable Tstart equal 300.0
+variable Tdamp  equal 100*dt
+
+velocity all  create ${Tstart} 82557 dist gaussian 
+
+fix 1 all nvt temp ${Tstart} ${Tstart} ${Tdamp}
+
+# thermo output
+variable natoms equal count(all)
+variable myVol  equal vol
+variable myStep equal step
+variable myTemp equal temp
+variable myEtotal equal etotal
+
+print "Number of atoms = ${natoms}"
+print "Volume = ${myVol}"
+fix output all print 100 "step = ${myStep} T = ${myTemp} Etotal = ${myEtotal}" file thermo.out title "# Step T Etotal" screen no
+
+thermo 1000
+
+
+run 100000
+

@@ -1,0 +1,56 @@
+units metal
+dimension 3
+boundary p p p
+
+atom_style atomic
+
+lattice fcc 3.62
+region box block 0 8 0 8 0 8
+create_box 1 box
+create_atoms 1 box
+
+pair_style eam
+pair_coeff 1 1 ../potentials/Cu_u3.eam
+
+thermo 1000
+thermo_style custom step temp pe etotal press vol
+
+velocity all  create 100.0  4928459 dist gaussian 
+# neighbor	0.3 bin
+# neigh_modify	every 20 delay 0 check no
+
+fix fixNPT all npt temp 100.0 100.0 0.1 iso 0.0 0.0 1.0
+
+run 10000
+
+unfix fixNPT
+
+write_data equil.lmp 
+write_restart restart.equil
+
+fix fixNPT all npt temp 100 2000 0.1 iso 0.0 0.0 1.0
+
+# MSD
+compute myMSD all msd
+fix fixMSD all ave/time 10 100 1000 c_myMSD[*] file msd.dat
+
+# RDF
+# compute myRDF all rdf 200 1 1 cutoff 6
+compute myRDF all rdf 200 1 1
+fix fixRDF all ave/time 10 100 1000 c_myRDF[*] file rdf.dat mode vector
+
+# Vol
+variable vol equal vol
+variable temp equal temp
+fix vol all ave/time 10 100 1000 v_temp v_vol file vol.dat
+
+# Run
+dump 1 all atom 100 dump.lammpstrj
+run 100000
+
+# Post-processing
+# python post_processing.py
+
+
+
+

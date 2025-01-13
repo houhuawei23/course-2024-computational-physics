@@ -1,0 +1,29 @@
+# run: lmp -in vacuum.lmps -var TYPE bcc -var LATTICE_CONSTANT 3.52
+
+units metal
+dimension 3
+boundary p p p
+
+# Define the region and box first
+region big_region block 0 20 0 20 0 20
+create_box 1 big_region
+
+# Define the atom region
+# region atom_region block 0 10 0 20 0 20 # x
+# region atom_region block 0 20 0 10 0 20 # y
+region atom_region block 0 20 0 20 0 10 # z
+
+# Now define the lattice type and constant
+variable lattice_type string ${TYPE}
+variable lattice_constant equal ${LATTICE_CONSTANT}
+
+lattice ${lattice_type} ${lattice_constant}
+
+create_atoms 1 region atom_region
+
+# Define potential
+pair_style eam/alloy
+pair_coeff * * ../../Al99.eam.alloy Al  # Ensure Al99.eam.alloy is present
+
+# Output atomic positions
+write_data vacuum_${lattice_type}_${lattice_constant}_z.data

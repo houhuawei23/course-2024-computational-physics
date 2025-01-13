@@ -1,0 +1,24 @@
+# run: lmp -in lattice.lmps -var TYPE fcc -var LATTICE_CONSTANT 3.52
+
+units metal
+dimension 3
+boundary p p p
+
+# Define the region and box first
+region box block 0 10 0 10 0 10
+create_box 1 box
+
+# Now define the lattice type and constant
+variable lattice_type string ${TYPE}
+variable lattice_constant equal ${LATTICE_CONSTANT}
+
+lattice ${lattice_type} ${lattice_constant}
+
+create_atoms 1 box
+
+# Define potential
+pair_style eam/alloy
+pair_coeff * * ../../Al99.eam.alloy Al  # Ensure Al99.eam.alloy is present
+
+# Output atomic positions
+write_data ${lattice_type}.data

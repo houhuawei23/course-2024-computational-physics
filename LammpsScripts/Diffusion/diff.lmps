@@ -1,0 +1,44 @@
+# Ar: epsilon = 122 (K*kB), sigma = 3.40 (A)
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+lattice fcc 1.0
+region mybox block 0 30 0 30 0 30
+create_box 1 mybox
+create_atoms 1 random 500 654321 mybox
+
+mass 1 40.0
+pair_style lj/cut 12.0
+pair_coeff 1 1 0.01034 3.4
+
+timestep 1e-3
+thermo 1000
+minimize 1.0e-4 1.0e-6 100 1000
+
+variable T equal 84.56
+variable P equal 0.93
+velocity all create $T 87287
+
+fix NPT all npt temp $T $T $(100*dt) iso $P $P $(1000*dt)
+run 500
+
+unfix NPT
+reset_timestep 0
+
+fix NVE all nve
+compute MSD all msd
+
+variable time equal dt*step
+variable MSD_x equal c_MSD[1]
+variable MSD_y equal c_MSD[2]
+variable MSD_z equal c_MSD[3]
+variable MSD_all equal c_MSD[4]
+
+fix output all print 100 "${time} ${MSD_x} ${MSD_y} ${MSD_z} ${MSD_all}" screen no file MSDfile.txt
+
+dump 1 all custom 100 dump.lammpstrj id type x y z vx vy vz
+
+run 1000

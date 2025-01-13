@@ -1,0 +1,90 @@
+# units lj
+dimension 2
+boundary p s p
+
+atom_style atomic
+neighbor	0.3 bin
+neigh_modify	delay 5
+
+# create geometry
+lattice hex 0.7
+region mybox block 0.0 20.0 0.0 20.0 -0.5 0.5
+# region mybox block 0 20 0 10 -0.25 0.25
+create_box 4 mybox
+
+create_atoms 1 box
+# create a huge virtual atom
+# create_atoms 2 random 1 123456 mybox
+
+mass 1 1.0
+mass 2 1.0 
+mass 3 1.0
+mass 4 10.0
+
+# LJ potentials
+pair_style lj/cut 2.0 
+pair_coeff *  *  1.0 1.0 2.0
+
+# define groups
+region 1 block INF INF INF 1.25 INF INF 
+group lower region 1 
+
+region 2 block INF INF 18.75 INF INF INF
+group upper region 2
+
+group boundary union lower upper
+group flow subtract all boundary
+
+set group lower type 2
+set group upper type 3
+
+
+# initial velocities
+compute mobile flow temp
+velocity flow create 1.0 482748 temp mobile
+fix 1 all nve
+fix 2 flow temp/rescale 200 1.0 1.0 0.02 1.0
+fix_modify 2 temp mobile
+
+velocity boundary set 0.0 0.0 0.0
+
+fix 3 lower setforce 0.0 0.0 0.0
+fix 4 upper setforce 0.0 NULL 0.0 
+fix 5 upper  aveforce 0.0 -1.0 0.0
+fix 6 flow addforce 0.5 0.0 0.0
+fix 7 all enforce2d
+
+# obstacles
+# fix ID group-ID indent K sphere args side value
+# region 
+
+
+
+
+
+
+
+timestep 0.003
+thermo 500
+thermo_modify temp mobile
+
+dump 1 all atom 500 dump.flow
+
+compute chunk1 flow chunk/atom bin/1d y 0 0.5 nchunk every
+
+# fix ID group-ID ave/chunk Nevery Nrepeat Nfreq chunkID value1 ... keyword args ...
+# • ID, group-ID are documented in compute command
+# • ave/chunk = style name of this fix command
+# • Nevery = use input values every this many timesteps
+# • Nrepeat = # of times to use input values for calculating averages
+# • Nfreq = calculate averages every this many timesteps
+# • chunkID = ID of compute chunk/atom command
+# • value = vx, vy, vz, …
+
+fix velfile flow ave/chunk 10 10000 100000 chunk1 vx file velocity.dat
+
+run 100000
+# define the block grid
+
+# fix
+
