@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_results_beta(thermo_out_file: str, plot_file: str = "energy.png"):
+def plot_thermo_results(thermo_out_file: str, plot_file: str = "energy.png"):
     # Load data
     thermo = np.loadtxt(thermo_out_file)
     timeStep = 5 / 1000  # ps
@@ -61,7 +61,7 @@ def plot_results_beta(thermo_out_file: str, plot_file: str = "energy.png"):
     plt.show()
 
 
-def check_energy_fluctuation_beta():
+def check_energy_fluctuation():
     # Define the directory path
     diff_cutoff_dir_path = os.path.join(os.getcwd(), "test/diff_cutoff")
     os.chdir(diff_cutoff_dir_path)
@@ -139,6 +139,6 @@ if __name__ == "__main__":
     plot_file = args.plot_file
     # run example: python plot_results.py ./test/thermo.out --plot_file ./test/energy.png
     # python ./scripts/plot_results.py ./test/lammps/thermo.out --plot_file ./lammps_energy.png
-    plot_results_beta(thermo_out_file, plot_file)
+    plot_thermo_results(thermo_out_file, plot_file)
 
     # check_energy_fluctuation_beta()

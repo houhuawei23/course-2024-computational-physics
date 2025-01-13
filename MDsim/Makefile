@@ -1,7 +1,8 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -fopenmp -Iinclude -std=c++17 -O3 -Wall # -pg for profiling
+CXXFLAGS = -pg -g -fopenmp -Iinclude -std=c++17 -O3 -Wall # -pg for profiling
 DEBUGFLAGS = -g
+PROF_FLAGS = -pg
 
 # Directories
 SRC_DIR = src
@@ -27,6 +28,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 debug: CXXFLAGS += $(DEBUGFLAGS)
 debug: $(TARGET)
+
+profile: CXXFLAGS += $(PROF_FLAGS)
+profile: $(TARGET)
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
